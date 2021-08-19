@@ -286,9 +286,6 @@
     } elseif (isset($_POST['ujianSave'])) {
       $waktuSelesai = strtotime($_POST['tgl'] . ' ' . $_POST['jam_selesai'] . ':00');
       $waktuMulai   = strtotime($_POST['tgl'] . ' ' . $_POST['jamMulai'] . ':00');
-
-      // $waktuSelesai = strtotime($_POST['tgl'] . ' 12:15:00');
-      // $waktuMulai   = strtotime($_POST['tgl'] . ' 11:45:00');
       
       $waktu  = $waktuSelesai - $waktuMulai;
 

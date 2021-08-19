@@ -30,82 +30,112 @@
     ");
   }
 
-$q2soal = mysqli_query($mysqli, "SELECT * FROM soal WHERE id_ujian='$_GET[ujian]' ORDER BY id_soal");
+  $q2soal = mysqli_query($mysqli, "SELECT * FROM soal WHERE id_ujian='$_GET[ujian]' ORDER BY id_soal");
 
-if(mysqli_num_rows($qsoal)==0) die('<div class="alert alert-warning">Belum ada soal pada ujian ini</div>');
+  if(mysqli_num_rows($qsoal)==0) die('<div class="alert alert-warning">Belum ada soal pada ujian ini</div>');
 
-$arr_soal = array();
-$arr_jawaban = array();
-while($rsoal = mysqli_fetch_array($qsoal)){
-   $arr_soal[] = $rsoal['id_soal'];
-   $arr_jawaban[] = 0;
-}
-$soalid = array();
-while($r2soal = mysqli_fetch_array($q2soal)){
-   $soalid[] = $r2soal['id_soal'];
-   }
-
-$acak_soal = implode(",", $arr_soal);
-$jawaban = implode(",", $arr_jawaban);
-
-
-//2 Memasukkan data ke tabel nilai jika data nilai belum ada
-$qnilai = mysqli_query($mysqli, "SELECT * FROM nilai WHERE id_siswa='$_SESSION[id_siswa]' AND id_ujian='$_GET[ujian]'");
-if(mysqli_num_rows($qnilai) < 1){
-
-$jam = date("H:i:s");
-$jm1 = substr($jam,0,2);
-$mn1 = substr($jam,3,2);
-$dt1 = substr($jam,6,2);
-$waktu = date("$rujian[waktu]");
-$jm2 = substr($waktu,0,2);
-$mn2 = substr($waktu,3,2);
-$dt2 = substr($waktu,6,2);
-$jam12 = $jm2+$jm1;
-$menit = $mn2 + $mn1 ;
-$detik = $dt1;
-if($menit>60){	
-$hr = $jam12 + 1;
-$mn = $menit -60;
-}
-else {	
-$hr = $jam12;
-$mn = $menit;		
-}
-
-$waktuselesai = date ("$hr:$mn:$detik");
-
-
-   mysqli_query($mysqli, "INSERT INTO nilai SET id_siswa='$_SESSION[id_siswa]',id_ujian='$_GET[ujian]', acak_soal='$acak_soal', jawaban='$jawaban', sisa_waktu='$waktu',waktu_selesai='$waktuselesai'");
- 
-  $kls = $soalid;
-  foreach($kls as $kelas) {
-   mysqli_query($mysqli, "INSERT INTO analisis SET id_siswa='$_SESSION[id_siswa]',id_ujian='$_GET[ujian]', id_soal='$kelas', jawaban='0'");
+  $arr_soal = array();
+  $arr_jawaban = array();
+  while($rsoal = mysqli_fetch_array($qsoal)){
+    $arr_soal[] = $rsoal['id_soal'];
+    $arr_jawaban[] = 0;
+  }
+  $soalid = array();
+  while($r2soal = mysqli_fetch_array($q2soal)){
+    $soalid[] = $r2soal['id_soal'];
   }
 
-} else {
-
-$nil = mysqli_fetch_array($qnilai);
-
-$jam = date("H:i:s");
-$jm1 = substr($jam,0,2);
-$mn1 = substr($jam,3,2);
-$dt1 = substr($jam,6,2);
+  $acak_soal = implode(",", $arr_soal);
+  $jawaban = implode(",", $arr_jawaban);
 
 
-$selesai = date("$nil[waktu_selesai]");
-$jm2 = substr($selesai,0,2);
-$mn2 = substr($selesai,3,2);
-$dt2 = substr($selesai,6,2);
+  //2 Memasukkan data ke tabel nilai jika data nilai belum ada
+  $qnilai = mysqli_query($mysqli, "SELECT * FROM nilai WHERE id_siswa='$_SESSION[id_siswa]' AND id_ujian='$_GET[ujian]'");
+  if(mysqli_num_rows($qnilai) < 1){
+    $jam = date("H:i:s");
+    $jm1 = substr($jam,0,2);
+    $mn1 = substr($jam,3,2);
+    $dt1 = substr($jam,6,2);
+    
+    $waktuSelesaia = strtotime($rujian['tanggal'] . ' ' . $rujian['jam_selesai'] . ':00');
+    $waktuMulaia   = strtotime('now');
+    
+    $waktua  = $waktuSelesaia - $waktuMulaia;
 
-$mulai = mktime($jm1,$mn1,$dt1); 
-$selesai = mktime($jm2,$mn2,$dt2);  
+    $jama    = floor($waktua / (60 * 60));
+    $menita  = ($waktua % (60 * 60)) / 60;
+    switch (strlen($jama)) {
+      case '1':
+        $jama  = '0' . $jama;
+        break;
+      case '2':
+        $jama  = $jama;
+        break;
+      
+      default:
+        # code...
+        break;
+    }
+    switch (strlen($menita)) {
+      case '1':
+        $menita  = '0' . $menita;
+        break;
+      case '2':
+        $menita  = $menita;
+        break;
+      
+      default:
+        # code...
+        break;
+    }
+    $waktu  = $jama . ':' . $menita . ':00';
 
-$lama = $selesai - $mulai;
 
-$hr = (int) ($lama / 3600);
-$mn = (int) (($lama - ($hr * 3600) ) / 60);
-$sc =  $lama - ($hr * 3600) - ($mn * 60) ; 
+    // $waktu = date("$rujian[waktu]");
+    $jm2 = substr($waktu,0,2);
+    $mn2 = substr($waktu,3,2);
+    $dt2 = substr($waktu,6,2);
+    $jam12 = $jm2+$jm1;
+    $menit = $mn2 + $mn1 ;
+    $detik = $dt1;
+    if($menit>60){	
+      $hr = $jam12 + 1;
+      $mn = $menit -60;
+    } else {	
+      $hr = $jam12;
+      $mn = $menit;		
+    }
+    $waktuselesai = date ("$hr:$mn:$detik");
+
+    mysqli_query($mysqli, "INSERT INTO nilai SET id_siswa='$_SESSION[id_siswa]',id_ujian='$_GET[ujian]', acak_soal='$acak_soal', jawaban='$jawaban', sisa_waktu='$waktu',waktu_selesai='$waktuselesai'");
+ 
+    $kls = $soalid;
+    foreach($kls as $kelas) {
+      mysqli_query($mysqli, "INSERT INTO analisis SET id_siswa='$_SESSION[id_siswa]',id_ujian='$_GET[ujian]', id_soal='$kelas', jawaban='0'");
+    }
+  } else {
+
+    $nil = mysqli_fetch_array($qnilai);
+
+    $jam = date("H:i:s");
+    $jm1 = substr($jam,0,2);
+    $mn1 = substr($jam,3,2);
+    $dt1 = substr($jam,6,2);
+
+
+    $selesai = date("$nil[waktu_selesai]");
+    $jm2 = substr($selesai,0,2);
+    $mn2 = substr($selesai,3,2);
+    $dt2 = substr($selesai,6,2);
+
+    $mulai = mktime($jm1,$mn1,$dt1); 
+    $selesai = mktime($jm2,$mn2,$dt2);  
+
+    $lama = $selesai - $mulai;
+
+    $hr = (int) ($lama / 3600);
+    $mn = (int) (($lama - ($hr * 3600) ) / 60);
+    $sc =  $lama - ($hr * 3600) - ($mn * 60) ; 
 
 if($mn < 0){
 	mysqli_query($mysqli, "UPDATE nilai SET sisa_waktu = '00:00:01' WHERE id_siswa='$_SESSION[id_siswa]' AND id_ujian='$_GET[ujian]'"); 
